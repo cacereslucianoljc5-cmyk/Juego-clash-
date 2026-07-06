@@ -54,6 +54,16 @@ export default async function handler(req, res) {
             INSERT INTO queue (wallet, name, stake, match_id, opponent)
             VALUES (${wallet}, ${name || wallet}, ${stake || '0'}, ${mid}, ${foe.name})
             ON CONFLICT (wallet) DO UPDATE SET match_id = ${mid}, opponent = ${foe.name}, stake = ${stake || '0'}`;
+          // Roles deterministas: la wallet menor es el anfitrión (equipo 1).
+          const host = wallet < foe.wallet ? wallet : foe.wallet;
+          const guest = wallet < foe.wallet ? foe.wallet : wallet;
+          const hostName = host === wallet ? (name || wallet) : foe.name;
+          const guestName = guest === wallet ? (name || wallet) : foe.name;
+          const seed = Math.abs(hash(mid));
+          await sql`
+            INSERT INTO matches (match_id, host, guest, host_name, guest_name, seed)
+            VALUES (${mid}, ${host}, ${guest}, ${hostName}, ${guestName}, ${seed})
+            ON CONFLICT (match_id) DO NOTHING`;
           return res.status(200).json({ status: 'matched', matchId: mid, opponent: foe.name });
         }
         // nadie: me pongo a esperar

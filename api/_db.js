@@ -32,6 +32,30 @@ export function initDb() {
         opponent  TEXT,
         joined_at TIMESTAMPTZ DEFAULT now()
       )`;
+      // Metadatos de cada partida 1v1 (roles + semilla + reloj de inicio),
+      // compartidos por ambos clientes para el lockstep determinista.
+      await sql`CREATE TABLE IF NOT EXISTS matches (
+        match_id   TEXT PRIMARY KEY,
+        host       TEXT NOT NULL,   -- wallet del equipo 1 (abajo)
+        guest      TEXT NOT NULL,   -- wallet del equipo -1 (arriba)
+        host_name  TEXT,
+        guest_name TEXT,
+        seed       BIGINT NOT NULL,
+        started_at TIMESTAMPTZ DEFAULT now()
+      )`;
+      // Comandos de despliegue: cada uno se aplica en el mismo `apply_tick`
+      // en ambos clientes, manteniendo las simulaciones sincronizadas.
+      await sql`CREATE TABLE IF NOT EXISTS events (
+        id         BIGSERIAL PRIMARY KEY,
+        match_id   TEXT NOT NULL,
+        apply_tick BIGINT NOT NULL,
+        team       INT NOT NULL,
+        card       TEXT NOT NULL,
+        x          REAL NOT NULL,
+        z          REAL NOT NULL,
+        created_at TIMESTAMPTZ DEFAULT now()
+      )`;
+      await sql`CREATE INDEX IF NOT EXISTS events_match_idx ON events (match_id, id)`;
     })();
   }
   return ready;

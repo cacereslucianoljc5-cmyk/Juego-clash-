@@ -115,6 +115,40 @@ let timeLeft = MATCH_TIME;
 let gameOver = false;
 let started = false;
 
+// ------------------------------------------------------------ modo red (1v1)
+// En red, ambos clientes corren la MISMA simulación determinista y solo se
+// sincronizan los comandos de despliegue (lockstep). `myTeam` decide qué lado
+// controlo y cómo se orienta la cámara; el élixir se lleva por equipo.
+let NET = null;             // objeto de red (js/netmatch.js) o null (offline)
+let myTeam = 1;
+let simTick = 0;
+const elixirTeam = { 1: 5, '-1': 5 };
+let pending = [];          // despliegues propios en vuelo: {applyTick, cost}
+
+const FIXED = 1 / 60;
+
+function myElixir() {
+  if (!NET) return player.elixir;
+  const held = pending.reduce((s, p) => s + p.cost, 0);
+  return Math.max(0, elixirTeam[myTeam] - held);
+}
+function oppTeam() { return -myTeam; }
+
+// Aplica un comando de despliegue en el tick acordado (idéntico en ambos
+// clientes). Si el equipo no tiene élixir, ambos lo ignoran por igual.
+function applyNetCommand(c) {
+  const t = UNIT_TYPES[c.card];
+  if (!t) return;
+  if (elixirTeam[c.team] >= t.cost) {
+    elixirTeam[c.team] -= t.cost;
+    const n = t.count ?? 1;
+    for (let i = 0; i < n; i++) {
+      spawnUnit(c.card, c.team, c.x + (i - (n - 1) / 2) * 1.3, c.z + (i % 2) * 1.1);
+    }
+    sfx('deploy', 0);
+  }
+}
+
 // ------------------------------------------------------------ interfaz
 const ui = {
   loading: document.getElementById('loading'),
@@ -185,17 +219,21 @@ function buildDeck() {
 }
 
 function paintCrowns() {
+  // en red muestro primero MIS coronas (las de mi equipo)
+  const mine = myTeam === 1 ? player.crowns : enemy.crowns;
+  const theirs = myTeam === 1 ? enemy.crowns : player.crowns;
   ui.crowns.innerHTML =
-    `${icon('crown', 14)}<b>${player.crowns}</b> — <b>${enemy.crowns}</b>${icon('crown', 14)}`;
+    `${icon('crown', 14)}<b>${mine}</b> — <b>${theirs}</b>${icon('crown', 14)}`;
 }
 
 function refreshDeck() {
+  const el = myElixir();
   document.querySelectorAll('.card').forEach((c) => {
     const t = UNIT_TYPES[c.dataset.key];
-    c.classList.toggle('poor', player.elixir < t.cost);
+    c.classList.toggle('poor', el < t.cost);
   });
-  ui.elixirFill.style.width = `${(player.elixir / ELIXIR_MAX) * 100}%`;
-  ui.elixirNum.textContent = Math.floor(player.elixir);
+  ui.elixirFill.style.width = `${(el / ELIXIR_MAX) * 100}%`;
+  ui.elixirNum.textContent = Math.floor(el);
 }
 
 // ------------------------------------------------------------ barras de vida
@@ -213,7 +251,7 @@ function paintHpBar(bar, frac) {
   g.clearRect(0, 0, 64, 10);
   g.fillStyle = 'rgba(10,14,20,.75)';
   g.fillRect(0, 0, 64, 10);
-  g.fillStyle = bar.team === 1 ? '#3b82f6' : '#ef4444';
+  g.fillStyle = bar.team === myTeam ? '#3b82f6' : '#ef4444';
   g.fillRect(1.5, 1.5, 61 * Math.max(0, frac), 7);
   bar.tex.needsUpdate = true;
 }
@@ -229,7 +267,7 @@ function spawnUnit(key, team, x, z) {
   // anillo de equipo
   const ring = new THREE.Mesh(
     new THREE.RingGeometry(t.radius * 0.85, t.radius * 1.15, 28),
-    new THREE.MeshBasicMaterial({ color: team === 1 ? 0x3b82f6 : 0xef4444, transparent: true, opacity: 0.65 }),
+    new THREE.MeshBasicMaterial({ color: team === myTeam ? 0x3b82f6 : 0xef4444, transparent: true, opacity: 0.65 }),
   );
   ring.rotation.x = -Math.PI / 2;
   ring.position.y = 0.06;
@@ -240,19 +278,22 @@ function spawnUnit(key, team, x, z) {
   group.add(bar.sprite);
   paintHpBar(bar, 1);
 
+  const uid = nextId++;
+  // Desfases de animación derivados del id (no de Math.random) para que la
+  // simulación sea 100% determinista y dos clientes en red no se desincronicen.
   const u = {
-    id: nextId++, key, type: t, team, group, body,
+    id: uid, key, type: t, team, group, body,
     turret, turretAngle: 0,
     hp: t.hp, maxHp: t.hp, radius: t.radius,
     target: null, retarget: 0, attackCd: 0,
-    animT: Math.random() * 10, walkPhase: Math.random() * 6,
+    animT: ((uid * 0.61803398875) % 1) * 10, walkPhase: ((uid * 0.31830988618) % 1) * 6,
     attackAnimT: 0, attackAnimDur: 0.4,
     dying: false, deathT: 0, flash: 0, bar,
     life: t.lifetime ?? Infinity,
     mats: collectMeshMaterials(body),
   };
   entities.push(u);
-  addEffect('ring', x, z, team === 1 ? 0x60a5fa : 0xf87171, t.radius + 0.8);
+  addEffect('ring', x, z, team === myTeam ? 0x60a5fa : 0xf87171, t.radius + 0.8);
   return u;
 }
 
@@ -281,7 +322,7 @@ function dealDamage(u, dmg) {
       side.crowns += u.isKing ? 3 : 1;
       paintCrowns();
       addEffect('boom', u.group.position.x, u.group.position.z, 0xffc94d, u.radius + 3);
-      if (u.isKing) endGame(u.team === -1);
+      if (u.isKing) endGame(u.team !== myTeam);
     }
   }
 }
@@ -575,8 +616,10 @@ function pointFromEvent(ev) {
   const p = new THREE.Vector3();
   return ray.ray.intersectPlane(groundPlane, p) ? p : null;
 }
-function validDrop(p, t) {
-  return p && p.z > RIVER_Z1 + 0.8 && walkable(p.x, p.z, t.radius);
+// Mitad válida de despliegue según el equipo (cada uno en su lado del río).
+function validDrop(p, t, team = myTeam) {
+  if (!p || !walkable(p.x, p.z, t.radius)) return false;
+  return team === 1 ? p.z > RIVER_Z1 + 0.8 : p.z < RIVER_Z0 - 0.8;
 }
 
 addEventListener('pointermove', (ev) => {
@@ -594,7 +637,20 @@ addEventListener('pointerdown', (ev) => {
   if (ev.target.closest('#deck') || ev.target.closest('#result')) return;
   const t = UNIT_TYPES[selectedCard];
   const p = pointFromEvent(ev);
-  if (!validDrop(p, t) || player.elixir < t.cost) { sfx('invalid', 0); return; }
+  if (!validDrop(p, t) || myElixir() < t.cost) { sfx('invalid', 0); return; }
+
+  if (NET) {
+    // El despliegue no ocurre ya: se programa en un tick futuro del RELOJ
+    // COMPARTIDO (no del simTick local, que puede ir retrasado) y se envía al
+    // rival; ambos clientes lo aplican en ese mismo tick global (lockstep).
+    const applyTick = NET.currentTick() + NET.delayTicks;
+    pending.push({ applyTick, cost: t.cost });
+    NET.sendDeploy({ applyTick, team: myTeam, card: selectedCard, x: p.x, z: p.z })
+      .catch(() => { pending = pending.filter((q) => !(q.applyTick === applyTick && q.cost === t.cost)); });
+    sfx('deploy', 0);
+    return;
+  }
+
   sfx('deploy', 0);
   player.elixir -= t.cost;
   const n = t.count ?? 1;
@@ -657,8 +713,19 @@ async function checkVersion() {
   return false;
 }
 
-async function start() {
+async function start(net = null) {
   if (await checkVersion()) return;
+  if (net) {
+    NET = net;
+    myTeam = net.myTeam;
+    simTick = 0;
+    elixirTeam[1] = 5; elixirTeam['-1'] = 5;
+    // oriento la cámara para que MI lado quede abajo
+    if (myTeam === -1) {
+      camera.position.set(0, CAM_BASE.y, -CAM_BASE.z);
+      camera.lookAt(0, 0, 2);
+    }
+  }
   initCursor();
   buildDeck();
   paintCrowns();
@@ -688,19 +755,30 @@ addEventListener('pointermove', (ev) => { mouseX = (ev.clientX / innerWidth) * 2
 
 // Bucle de paso fijo: la simulación avanza en pasos de 1/60 s aunque el
 // render vaya lento, así la velocidad del juego no depende de los FPS.
-const FIXED = 1 / 60;
 const SPEED = Math.min(8, Math.max(0.1, Number(new URLSearchParams(location.search).get('speed')) || 1));
 let acc = 0;
 
 function step(dt) {
   if (!gameOver) {
-    player.elixir = Math.min(ELIXIR_MAX, player.elixir + ELIXIR_RATE * dt);
+    if (NET) {
+      // regeneración de élixir de ambos equipos (determinista)
+      elixirTeam[1] = Math.min(ELIXIR_MAX, elixirTeam[1] + ELIXIR_RATE * dt);
+      elixirTeam['-1'] = Math.min(ELIXIR_MAX, elixirTeam['-1'] + ELIXIR_RATE * dt);
+    } else {
+      player.elixir = Math.min(ELIXIR_MAX, player.elixir + ELIXIR_RATE * dt);
+    }
     timeLeft -= dt;
     if (timeLeft <= 0) {
       timeLeft = 0;
-      endGame(player.crowns === enemy.crowns ? 'draw' : player.crowns > enemy.crowns);
+      if (NET) {
+        const mine = myTeam === 1 ? player.crowns : enemy.crowns;
+        const theirs = myTeam === 1 ? enemy.crowns : player.crowns;
+        endGame(mine === theirs ? 'draw' : mine > theirs);
+      } else {
+        endGame(player.crowns === enemy.crowns ? 'draw' : player.crowns > enemy.crowns);
+      }
     }
-    updateEnemyAI(dt);
+    if (!NET) updateEnemyAI(dt);
     for (let i = entities.length - 1; i >= 0; i--) updateEntity(entities[i], dt);
     separate();
     updateProjectiles(dt);
@@ -712,12 +790,38 @@ function step(dt) {
   }
 }
 
+// Avanza la simulación de red hasta el tick marcado por el reloj compartido,
+// aplicando los comandos programados en cada tick.
+function netAdvance() {
+  const target = NET.currentTick();
+  // Tope alto para poder alcanzar el reloj compartido tras un parón/carga sin
+  // quedarnos permanentemente retrasados (lo que rompería el lockstep).
+  let steps = 0;
+  while (simTick < target && steps < 4000) {
+    for (const c of NET.commandsForTick(simTick)) applyNetCommand(c);
+    step(FIXED);
+    simTick++;
+    steps++;
+    pending = pending.filter((p) => p.applyTick >= simTick);
+  }
+  // rezagados: aplica comandos cuyo tick ya pasó para no perderlos
+  const late = NET.drainBefore(simTick);
+  for (const c of late) applyNetCommand(c);
+  if (late.length) pending = pending.filter((p) => p.applyTick >= simTick);
+}
+
 const clock = new THREE.Clock();
 function loop() {
   requestAnimationFrame(loop);
   const time = clock.elapsedTime;
 
-  if (started) {
+  if (started && NET) {
+    clock.getDelta();
+    netAdvance();
+    const m = Math.floor(timeLeft / 60), s = Math.floor(timeLeft % 60);
+    ui.timer.textContent = `${m}:${String(s).padStart(2, '0')}`;
+    refreshDeck();
+  } else if (started) {
     acc += Math.min(0.3 * SPEED, clock.getDelta() * SPEED);
     while (acc >= FIXED) { step(FIXED); acc -= FIXED; }
     const m = Math.floor(timeLeft / 60), s = Math.floor(timeLeft % 60);
@@ -729,10 +833,11 @@ function loop() {
 
   if (water) updateWater(time);
 
-  // paralaje suave de cámara
+  // paralaje suave de cámara (se invierte si juego desde el lado -1)
   if (!window.__CAMLOCK) {
-    camera.position.x += (mouseX * 4 - camera.position.x) * 0.03;
-    camera.lookAt(0, 0, -2);
+    const lookZ = myTeam === 1 ? -2 : 2;
+    camera.position.x += (mouseX * 4 * myTeam - camera.position.x) * 0.03;
+    camera.lookAt(0, 0, lookZ);
   }
 
   renderer.render(scene, camera);
@@ -740,6 +845,16 @@ function loop() {
 }
 
 document.getElementById('replay').addEventListener('click', () => location.reload());
+
+// hook de depuración del netcode (inofensivo en producción)
+window.__NET = () => ({
+  hasNet: !!NET, started, myTeam, simTick,
+  target: NET ? NET.currentTick() : null,
+  bufTicks: NET ? [...NET.buffer.keys()] : null,
+  ready: NET ? NET.ready : null,
+  e1: +elixirTeam[1].toFixed(1), e2: +elixirTeam['-1'].toFixed(1),
+  pending: pending.length,
+});
 
 // gancho de depuración (inofensivo en producción)
 window.__CAM = camera;
@@ -763,6 +878,14 @@ window.__DBG = () => ({
 window.startOfflineGame = () => {
   if (started) return;
   start().catch((err) => {
+    ui.loadtext.textContent = `Error loading: ${err.message}`;
+    console.error(err);
+  });
+};
+// Arranque de partida 1v1 en red: recibe el objeto de red ya listo (js/menu.js).
+window.startNetMatch = (net) => {
+  if (started) return;
+  start(net).catch((err) => {
     ui.loadtext.textContent = `Error loading: ${err.message}`;
     console.error(err);
   });

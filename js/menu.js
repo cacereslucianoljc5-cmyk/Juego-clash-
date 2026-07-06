@@ -8,6 +8,8 @@
 // menú funcione sin backend. Así, conectar Neon después es un simple cambio.
 // ===========================================================================
 
+import { createNetMatch } from './netmatch.js?v=1';
+
 const API = window.CLASH_API || null; // p.ej. 'https://tu-app.vercel.app/api'
 
 const $ = (id) => document.getElementById(id);
@@ -233,7 +235,7 @@ async function findMatch() {
     });
     if (!res.ok) throw new Error('backend no disponible');
     const r = await res.json();
-    if (r.status === 'matched') return onMatched(r.opponent);
+    if (r.status === 'matched') return onMatched(r.matchId, r.opponent);
     // esperando: sondeamos hasta que otro jugador entre
     matchTimer = setInterval(pollMatch, 2500);
   } catch (e) {
@@ -246,19 +248,26 @@ async function pollMatch() {
     const res = await fetch(`${API}/match?wallet=${encodeURIComponent(state.wallet)}`);
     if (!res.ok) return;
     const r = await res.json();
-    if (r.status === 'matched') { clearInterval(matchTimer); matchTimer = null; onMatched(r.opponent); }
+    if (r.status === 'matched') { clearInterval(matchTimer); matchTimer = null; onMatched(r.matchId, r.opponent); }
   } catch { /* reintenta en el siguiente tick */ }
 }
-function onMatched(opponent) {
+async function onMatched(matchId, opponent) {
   searching = false;
   setFoe(opponent, true);
-  $('onlineStatus').textContent = '¡Rival encontrado! Empezando la partida…';
   const find = $('onlineFind');
   find.classList.remove('searching');
   find.textContent = '¡Emparejado!';
-  // Fase 1: lanzamos la partida (por ahora contra la IA con las tropas del rival).
-  // La sincronización en vivo entre ambos jugadores es la fase 2.
-  setTimeout(() => { closeOnline(); startOffline(); }, 1100);
+  $('onlineStatus').textContent = '¡Rival encontrado! Sincronizando partida…';
+  try {
+    // Prepara el netcode (roles, semilla y reloj compartido) y lanza el 1v1.
+    const net = await createNetMatch({ api: API, matchId, wallet: state.wallet });
+    onlinePanel.classList.add('hide');
+    menu.classList.add('hide');
+    if (window.startNetMatch) window.startNetMatch(net);
+  } catch (e) {
+    $('onlineStatus').textContent = 'No se pudo iniciar la partida: ' + (e.message || e);
+    resetSearch();
+  }
 }
 function cancelSearch() {
   if (matchTimer) { clearInterval(matchTimer); matchTimer = null; }
