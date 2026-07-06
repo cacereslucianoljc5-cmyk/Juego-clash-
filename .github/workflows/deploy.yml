@@ -1,0 +1,27 @@
+name: Deploy a GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+      - claude/clash-royale-3d-web-10bnpl
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Publicar la rama en gh-pages
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -B gh-pages
+          git push -f origin gh-pages
