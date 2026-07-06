@@ -177,41 +177,106 @@ $('chatForm').addEventListener('submit', (e) => {
   sendMessage(text);
 });
 
-// --------------------------------------------------- BATALLA 1v1
+// --------------------------------------------------- BATALLA 1v1 (lobby)
 const onlinePanel = $('onlinePanel');
-function openOnline() {
-  onlinePanel.classList.remove('hide');
-  updateOnline();
-}
-function closeOnline() { onlinePanel.classList.add('hide'); }
+let stake = '0';
+let searching = false;
+let matchTimer = null;
+
+// selector de apuesta
+$('olStakes').addEventListener('click', (e) => {
+  const btn = e.target.closest('.ol-stake-btn');
+  if (!btn || searching) return;
+  document.querySelectorAll('.ol-stake-btn').forEach((b) => b.classList.remove('active'));
+  btn.classList.add('active');
+  stake = btn.dataset.stake;
+});
+
+function openOnline() { onlinePanel.classList.remove('hide'); updateOnline(); }
+function closeOnline() { cancelSearch(); onlinePanel.classList.add('hide'); }
+
 function updateOnline() {
   const status = $('onlineStatus');
   const find = $('onlineFind');
   $('olYou').textContent = state.wallet ? shorten(state.wallet) : 'Tú (invitado)';
+  if (searching) return;
   if (!state.wallet) {
     status.textContent = 'Conecta tu wallet de Solana para jugar online.';
-    find.disabled = true;
-    find.textContent = 'Conecta la wallet primero';
+    find.disabled = true; find.textContent = 'Conecta la wallet primero';
   } else if (!API) {
-    status.textContent = 'El multijugador online estará disponible al conectar el backend (Neon).';
-    find.disabled = true;
-    find.textContent = 'Online próximamente';
+    status.textContent = 'El online se activa al conectar el backend (Neon) en Vercel.';
+    find.disabled = true; find.textContent = 'Online próximamente';
   } else {
-    status.textContent = 'Listo para buscar rival.';
-    find.disabled = false;
-    find.textContent = 'Buscar rival';
+    status.textContent = 'Elige tu apuesta y busca rival.';
+    find.disabled = false; find.textContent = 'Buscar rival';
   }
 }
+
+function setFoe(name, found) {
+  $('olFoe').textContent = name || 'Rival';
+  const av = $('olFoeAv');
+  av.textContent = found ? '🙂' : '❔';
+  av.classList.toggle('found', !!found);
+}
+
+async function findMatch() {
+  if (!API || !state.wallet || searching) return;
+  searching = true;
+  const find = $('onlineFind');
+  find.classList.add('searching');
+  find.textContent = 'Buscando rival…';
+  $('onlineStatus').textContent = 'Emparejando por apuesta ' + (stake === '0' ? 'amistosa' : stake + ' ◎') + '…';
+  try {
+    const r = await fetch(`${API}/match`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'join', wallet: state.wallet, name: state.name, stake }),
+    }).then((x) => x.json());
+    if (r.status === 'matched') return onMatched(r.opponent);
+    // esperando: sondeamos hasta que otro jugador entre
+    matchTimer = setInterval(pollMatch, 2500);
+  } catch (e) {
+    $('onlineStatus').textContent = 'No se pudo conectar al servidor. Inténtalo de nuevo.';
+    resetSearch();
+  }
+}
+async function pollMatch() {
+  try {
+    const r = await fetch(`${API}/match?wallet=${encodeURIComponent(state.wallet)}`).then((x) => x.json());
+    if (r.status === 'matched') { clearInterval(matchTimer); matchTimer = null; onMatched(r.opponent); }
+  } catch { /* reintenta en el siguiente tick */ }
+}
+function onMatched(opponent) {
+  searching = false;
+  setFoe(opponent, true);
+  $('onlineStatus').textContent = '¡Rival encontrado! Empezando la partida…';
+  const find = $('onlineFind');
+  find.classList.remove('searching');
+  find.textContent = '¡Emparejado!';
+  // Fase 1: lanzamos la partida (por ahora contra la IA con las tropas del rival).
+  // La sincronización en vivo entre ambos jugadores es la fase 2.
+  setTimeout(() => { closeOnline(); startOffline(); }, 1100);
+}
+function cancelSearch() {
+  if (matchTimer) { clearInterval(matchTimer); matchTimer = null; }
+  if (searching && API && state.wallet) {
+    fetch(`${API}/match`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'leave', wallet: state.wallet }),
+    }).catch(() => {});
+  }
+  resetSearch();
+}
+function resetSearch() {
+  searching = false;
+  setFoe('Rival', false);
+  $('onlineFind').classList.remove('searching');
+  updateOnline();
+}
+
 $('btn1v1').addEventListener('click', openOnline);
 $('onlineClose').addEventListener('click', closeOnline);
 $('onlineBack').addEventListener('click', closeOnline);
-$('onlineFind').addEventListener('click', async () => {
-  if (!API || !state.wallet) return;
-  const find = $('onlineFind');
-  find.disabled = true;
-  find.textContent = 'Buscando rival…';
-  // El emparejamiento real se implementa con las funciones serverless + Neon.
-});
+$('onlineFind').addEventListener('click', () => { searching ? cancelSearch() : findMatch(); });
 
 // arranque
 renderWallet();

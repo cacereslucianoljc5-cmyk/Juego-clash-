@@ -235,7 +235,19 @@
   .ol-vsx { font-size: 22px; font-weight: 900; color: #fbbf24; }
   .ol-find { width: 100%; padding: 13px; border: 0; border-radius: 12px; cursor: pointer; font-weight: 800; font-size: 16px; background: linear-gradient(180deg,#38bdf8,#2563eb); color: #fff; margin-bottom: 10px; }
   .ol-find:disabled { opacity: .5; cursor: default; }
+  .ol-find.searching { background: linear-gradient(180deg,#f59e0b,#d97706); }
   .ol-back { background: transparent; border: 0; color: #94a3b8; cursor: pointer; font-size: 13px; }
+  .ol-stake { margin-bottom: 18px; }
+  .ol-stake-label { display: block; font-size: 12px; color: #94a3b8; margin-bottom: 8px; text-transform: uppercase; letter-spacing: .5px; }
+  .ol-stakes { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+  .ol-stake-btn {
+    padding: 8px 14px; border-radius: 10px; cursor: pointer; font-weight: 700; font-size: 13px;
+    background: #1e293b; color: #cbd5e1; border: 1.5px solid transparent; transition: all .12s;
+  }
+  .ol-stake-btn:hover { border-color: rgba(148,163,184,.5); }
+  .ol-stake-btn.active { background: linear-gradient(180deg,#c026d3,#a21caf); color: #fff; border-color: #f5d0fe; }
+  .ol-av.found { opacity: 1; border-color: #22c55e; animation: pop .4s cubic-bezier(.2,1.4,.5,1); }
+  @keyframes pop { from { transform: scale(.6); } }
 </style>
 </head>
 <body>
@@ -267,17 +279,35 @@
   <div class="chat-note" id="chatNote"></div>
 </div>
 
-<!-- ============ BATALLA 1v1 ============ -->
+<!-- ============ BATALLA 1v1 (lobby) ============ -->
 <div id="onlinePanel" class="hide">
   <div class="ol-card">
     <button id="onlineClose" class="x" aria-label="Cerrar">✕</button>
     <h2>⚔️ Batalla 1v1</h2>
     <p id="onlineStatus">Conecta tu wallet de Solana para jugar online.</p>
+
     <div class="ol-vs">
-      <div class="ol-player"><div class="ol-av you">🙂</div><span id="olYou">Tú</span></div>
+      <div class="ol-player">
+        <div class="ol-av you">🙂</div>
+        <span id="olYou">Tú</span>
+      </div>
       <div class="ol-vsx">VS</div>
-      <div class="ol-player"><div class="ol-av foe">❔</div><span id="olFoe">Rival</span></div>
+      <div class="ol-player">
+        <div class="ol-av foe" id="olFoeAv">❔</div>
+        <span id="olFoe">Rival</span>
+      </div>
     </div>
+
+    <div class="ol-stake">
+      <span class="ol-stake-label">Apuesta</span>
+      <div class="ol-stakes" id="olStakes">
+        <button class="ol-stake-btn active" data-stake="0">Amistoso</button>
+        <button class="ol-stake-btn" data-stake="0.05">0.05 ◎</button>
+        <button class="ol-stake-btn" data-stake="0.1">0.1 ◎</button>
+        <button class="ol-stake-btn" data-stake="0.25">0.25 ◎</button>
+      </div>
+    </div>
+
     <button id="onlineFind" class="ol-find">Buscar rival</button>
     <button id="onlineBack" class="ol-back">Volver al menú</button>
   </div>
@@ -314,7 +344,12 @@
 <script type="importmap">
   { "imports": { "three": "./lib/three.module.js" } }
 </script>
+<script>
+  // El backend serverless (Neon) solo existe en el despliegue de Vercel.
+  // En GitHub Pages (estático) queda undefined y el menú usa su demo local.
+  if (!location.hostname.endsWith('github.io')) window.CLASH_API = '/api';
+</script>
 <script type="module" src="./js/game.js?v=9"></script>
-<script type="module" src="./js/menu.js?v=1"></script>
+<script type="module" src="./js/menu.js?v=2"></script>
 </body>
 </html>

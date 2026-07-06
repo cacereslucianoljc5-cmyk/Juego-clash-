@@ -1,0 +1,10 @@
+{
+  "name": "juego-clash",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Clash 3D — juego web 3D estilo Clash Royale con menú, wallet Solana, chat global (Neon) y 1v1.",
+  "type": "module",
+  "dependencies": {
+    "@neondatabase/serverless": "^0.10.4"
+  }
+}
