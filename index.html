@@ -13,20 +13,27 @@
 
   #loading {
     position: fixed; inset: 0; z-index: 30; overflow: hidden;
-    background: #6fb7e0; transition: opacity .5s;
+    background: #241a2e; transition: opacity .5s;
   }
   #loading.hide { opacity: 0; pointer-events: none; }
 
-  /* escenario de fondo con leve zoom lento */
+  /* relleno desenfocado para cubrir los bordes sin cortar personajes */
+  #loading::before {
+    content: ''; position: absolute; inset: -6%;
+    background: url(./cards/loading_screen.webp?v=9) center/cover no-repeat;
+    filter: blur(26px) saturate(1.1) brightness(.55);
+    transform: scale(1.12);
+  }
+  /* imagen completa (contain): siempre se ven TODOS los personajes */
   #loading .scene {
-    position: absolute; inset: -4%;
-    background: url(./cards/loading_screen.webp?v=8) center/cover no-repeat;
-    animation: lz 14s ease-in-out infinite alternate;
+    position: absolute; inset: 0;
+    background: url(./cards/loading_screen.webp?v=9) center/contain no-repeat;
     filter: saturate(1.05);
+    animation: lz 14s ease-in-out infinite alternate;
   }
   @keyframes lz {
-    from { transform: scale(1.06) translateY(0); }
-    to   { transform: scale(1.13) translateY(-1.5%); }
+    from { transform: translateY(0); }
+    to   { transform: translateY(-1.2%); }
   }
   /* oscurecido inferior para que resalten personajes y barra */
   #loading .vig {
