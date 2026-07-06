@@ -40,6 +40,12 @@ python3 -m http.server 8000
 O actívalo en **GitHub Pages**: el workflow publica la rama en `gh-pages`
 automáticamente (Settings → Pages → rama `gh-pages`).
 
+## Pantalla de carga
+
+Al abrir, una pantalla estilo Clash muestra el escenario 3D de fondo con los
+personajes marchando y una barra de progreso dorada (sin titulo). Los recortes
+de personajes y el fondo se generan desde los propios modelos.
+
 ## Cartas
 
 El mazo muestra **cartas con imagen**: retratos generados desde los propios

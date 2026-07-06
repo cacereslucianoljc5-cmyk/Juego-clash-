@@ -3,15 +3,15 @@
 // colisión, igual que los bordes del campo antes de los bosques (cuadrícula
 // horneada en js/arenadata.js).
 import * as THREE from 'three';
-import { ARENA } from './arenadata.js?v=6';
+import { ARENA } from './arenadata.js?v=7';
 import {
   loadModels, getArenaModel, makeUnitMesh, collectMeshMaterials,
   animateUnit, UNIT_TYPES, CARD_KEYS,
-} from './units.js?v=6';
-import { initPostFX } from './postfx.js?v=6';
-import { icon } from './icons.js?v=6';
-import { sfx, jingle, unlockAudio } from './audio.js?v=6';
-import { initCursor } from './cursor.js?v=6';
+} from './units.js?v=7';
+import { initPostFX } from './postfx.js?v=7';
+import { icon } from './icons.js?v=7';
+import { sfx, jingle, unlockAudio } from './audio.js?v=7';
+import { initCursor } from './cursor.js?v=7';
 
 // ------------------------------------------------------------ constantes
 const S = 28;                        // escala del modelo Arena
@@ -120,6 +120,7 @@ const ui = {
   loading: document.getElementById('loading'),
   progress: document.getElementById('progress'),
   loadtext: document.getElementById('loadtext'),
+  pctnum: document.getElementById('pctnum'),
   deck: document.getElementById('deck'),
   elixirFill: document.getElementById('elixirFill'),
   elixirNum: document.getElementById('elixirNum'),
@@ -165,7 +166,7 @@ function buildDeck() {
     const t = UNIT_TYPES[key];
     const el = document.createElement('button');
     el.className = 'card';
-    el.style.backgroundImage = `url(./cards/${key}.webp?v=6)`;
+    el.style.backgroundImage = `url(./cards/${key}.webp?v=7)`;
     el.innerHTML = `<span class="cost">${t.cost}</span><span class="cname">${t.name}</span>`;
     el.addEventListener('pointerenter', () => sfx('hover', 40));
     el.addEventListener('click', () => {
@@ -643,7 +644,7 @@ function updateWater(time) {
 // Contra la caché de GitHub Pages: si version.json (pedido sin caché)
 // anuncia una versión más nueva que la de este HTML, recarga con una URL
 // única para forzar una copia fresca de la CDN.
-const GAME_VERSION = 6;
+const GAME_VERSION = 7;
 async function checkVersion() {
   try {
     const res = await fetch(`./version.json?nc=${Date.now()}`, { cache: 'no-store' });
@@ -662,9 +663,13 @@ async function start() {
   buildDeck();
   paintCrowns();
   await loadModels((f) => {
-    ui.progress.style.width = `${f * 100}%`;
-    ui.loadtext.textContent = `Cargando modelos… ${Math.round(f * 100)}%`;
+    ui.progress.style.width = `${Math.max(4, f * 100)}%`;
+    if (ui.pctnum) ui.pctnum.textContent = `${Math.round(f * 100)}%`;
   });
+  // deja ver un instante la barra llena antes de entrar
+  ui.progress.style.width = '100%';
+  if (ui.pctnum) ui.pctnum.textContent = '100%';
+  await new Promise((r) => setTimeout(r, 350));
 
   // la arena (mapa): sin animación propia, apoyada para que el pasto sea y=0
   const arena = getArenaModel();

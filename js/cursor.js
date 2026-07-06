@@ -3,7 +3,7 @@
 // - dedo señalando al pasar sobre una carta (con un pequeño pulso)
 // - mano agarrando mientras se mantiene pulsado
 // En pantallas táctiles no se activa (no hay puntero).
-import { icon } from './icons.js?v=6';
+import { icon } from './icons.js?v=7';
 
 export function initCursor() {
   if (matchMedia('(pointer: coarse)').matches) return; // táctil: cursor nativo
