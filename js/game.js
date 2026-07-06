@@ -575,7 +575,24 @@ function updateWater(time) {
 }
 
 // ------------------------------------------------------------ arranque
+// Contra la caché de GitHub Pages: si version.json (pedido sin caché)
+// anuncia una versión más nueva que la de este HTML, recarga con una URL
+// única para forzar una copia fresca de la CDN.
+const GAME_VERSION = 3;
+async function checkVersion() {
+  try {
+    const res = await fetch(`./version.json?nc=${Date.now()}`, { cache: 'no-store' });
+    const { v } = await res.json();
+    if (v > GAME_VERSION && !location.search.includes(`v${v}`)) {
+      location.replace(`${location.pathname}?v${v}`);
+      return true;
+    }
+  } catch { /* sin red o sin version.json: seguimos normal */ }
+  return false;
+}
+
 async function start() {
+  if (await checkVersion()) return;
   buildDeck();
   await loadModels((f) => {
     ui.progress.style.width = `${f * 100}%`;
@@ -662,6 +679,9 @@ window.__DBG = () => ({
   entities: entities.map((e) => ({
     key: e.key, team: e.team, hp: Math.round(e.hp),
     x: +e.group.position.x.toFixed(1), z: +e.group.position.z.toFixed(1),
+    rotY: +e.group.rotation.y.toFixed(3), bodyRot: +e.body.rotation.x.toFixed(3),
+    bodyY: +e.body.position.y.toFixed(3), scaleY: +e.body.scale.y.toFixed(3),
+    turret: e.turret ? +e.turret.rotation.y.toFixed(2) : undefined,
     tgt: e.target ? e.target.key : null,
   })),
 });
