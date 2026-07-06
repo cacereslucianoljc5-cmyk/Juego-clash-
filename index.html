@@ -20,7 +20,7 @@
   /* escenario de fondo con leve zoom lento */
   #loading .scene {
     position: absolute; inset: -4%;
-    background: url(./cards/loading_bg.webp?v=7) center/cover no-repeat;
+    background: url(./cards/loading_screen.webp?v=8) center/cover no-repeat;
     animation: lz 14s ease-in-out infinite alternate;
     filter: saturate(1.05);
   }
@@ -34,32 +34,6 @@
     background:
       radial-gradient(120% 80% at 50% 24%, transparent 40%, rgba(6,16,38,.35) 100%),
       linear-gradient(180deg, rgba(6,16,38,.12) 0%, transparent 22%, transparent 46%, rgba(6,16,38,.72) 100%);
-  }
-
-  /* fila de personajes marchando */
-  #loading .troops {
-    position: absolute; left: 0; right: 0; bottom: 104px;
-    display: flex; align-items: flex-end; justify-content: center; gap: min(3vw, 42px);
-    padding: 0 16px; pointer-events: none;
-  }
-  #loading .troops img {
-    height: clamp(120px, 24vh, 220px); width: auto;
-    filter: drop-shadow(0 10px 12px rgba(0,0,0,.45));
-    animation: bobIn .6s cubic-bezier(.2,1.3,.5,1) backwards, bob 2.4s ease-in-out infinite;
-    transform-origin: bottom center;
-  }
-  #loading .troops img:nth-child(1){ animation-delay: 0s,   .6s; }
-  #loading .troops img:nth-child(2){ animation-delay: .08s, .9s; }
-  #loading .troops img:nth-child(3){ animation-delay: .16s, .7s; height: clamp(140px,28vh,260px); }
-  #loading .troops img:nth-child(4){ animation-delay: .24s, 1.1s; }
-  #loading .troops img:nth-child(5){ animation-delay: .32s, .5s; }
-  @keyframes bobIn { from { opacity: 0; transform: translateY(40px) scale(.9); } }
-  @keyframes bob {
-    0%,100% { transform: translateY(0) rotate(-1deg); }
-    50%     { transform: translateY(-10px) rotate(1deg); }
-  }
-  @media (max-width: 620px) {
-    #loading .troops img:nth-child(1), #loading .troops img:nth-child(5) { display: none; }
   }
 
   /* barra de carga estilo Clash */
@@ -179,23 +153,16 @@
 <div id="loading">
   <div class="scene"></div>
   <div class="vig"></div>
-  <div class="troops">
-    <img src="./cards/cut_Esqueleto.webp?v=7" alt="" />
-    <img src="./cards/cut_Arquero.webp?v=7" alt="" />
-    <img src="./cards/cut_Gigante.webp?v=7" alt="" />
-    <img src="./cards/cut_MagoFuego.webp?v=7" alt="" />
-    <img src="./cards/cut_Barbaro.webp?v=7" alt="" />
-  </div>
   <div class="loadbar">
     <div class="track"><div class="fill" id="progress"></div></div>
-    <div class="pct"><span id="loadtext">Cargando</span><span class="dots"></span> <span id="pctnum"></span></div>
+    <div class="pct"><span id="loadtext">Loading</span><span class="dots"></span> <span id="pctnum"></span></div>
   </div>
 </div>
 
 <div id="hud">
   <span id="crowns"></span>
   <span id="timer">3:00</span>
-  <span id="ver" style="color:#64748b;font-size:11px;font-weight:600">v7</span>
+  <span id="ver" style="color:#64748b;font-size:11px;font-weight:600">v8</span>
 </div>
 <div id="hint">Elige una carta del mazo</div>
 
@@ -214,6 +181,6 @@
 <script type="importmap">
   { "imports": { "three": "./lib/three.module.js" } }
 </script>
-<script type="module" src="./js/game.js?v=7"></script>
+<script type="module" src="./js/game.js?v=8"></script>
 </body>
 </html>

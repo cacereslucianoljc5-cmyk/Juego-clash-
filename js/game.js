@@ -759,7 +759,7 @@ window.__DBG = () => ({
 });
 
 start().catch((err) => {
-  ui.loadtext.textContent = `Error cargando: ${err.message}`;
+  ui.loadtext.textContent = `Error loading: ${err.message}`;
   console.error(err);
 });
 loop();
