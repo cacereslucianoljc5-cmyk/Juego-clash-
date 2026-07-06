@@ -138,9 +138,10 @@ async function loadChat() {
   if (API) {
     try {
       const res = await fetch(`${API}/chat`);
-      renderMessages(await res.json());
-      $('chatNote').textContent = '';
-      return;
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) { renderMessages(data); $('chatNote').textContent = ''; return; }
+      }
     } catch { /* cae a demo local */ }
   }
   renderMessages(localMessages());
@@ -155,12 +156,11 @@ async function sendMessage(text) {
   const msg = { name: state.name, text, ts: Date.now(), wallet: state.wallet };
   if (API) {
     try {
-      await fetch(`${API}/chat`, {
+      const res = await fetch(`${API}/chat`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(msg),
       });
-      await loadChat();
-      return;
+      if (res.ok) { await loadChat(); return; }
     } catch { /* cae a demo local */ }
   }
   const all = localMessages();
@@ -227,21 +227,25 @@ async function findMatch() {
   find.textContent = 'Buscando rival…';
   $('onlineStatus').textContent = 'Emparejando por apuesta ' + (stake === '0' ? 'amistosa' : stake + ' ◎') + '…';
   try {
-    const r = await fetch(`${API}/match`, {
+    const res = await fetch(`${API}/match`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'join', wallet: state.wallet, name: state.name, stake }),
-    }).then((x) => x.json());
+    });
+    if (!res.ok) throw new Error('backend no disponible');
+    const r = await res.json();
     if (r.status === 'matched') return onMatched(r.opponent);
     // esperando: sondeamos hasta que otro jugador entre
     matchTimer = setInterval(pollMatch, 2500);
   } catch (e) {
-    $('onlineStatus').textContent = 'No se pudo conectar al servidor. Inténtalo de nuevo.';
+    $('onlineStatus').textContent = 'El servidor de emparejamiento aún no está disponible.';
     resetSearch();
   }
 }
 async function pollMatch() {
   try {
-    const r = await fetch(`${API}/match?wallet=${encodeURIComponent(state.wallet)}`).then((x) => x.json());
+    const res = await fetch(`${API}/match?wallet=${encodeURIComponent(state.wallet)}`);
+    if (!res.ok) return;
+    const r = await res.json();
     if (r.status === 'matched') { clearInterval(matchTimer); matchTimer = null; onMatched(r.opponent); }
   } catch { /* reintenta en el siguiente tick */ }
 }
