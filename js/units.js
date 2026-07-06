@@ -16,7 +16,7 @@ export async function loadModels(onProgress) {
   const loader = new GLTFLoader();
   let done = 0;
   await Promise.all(MODEL_FILES.map(async (name) => {
-    const gltf = await loader.loadAsync(`./models/${name}.glb`);
+    const gltf = await loader.loadAsync(`./models/${name}.glb?v=2`);
     const root = gltf.scene;
     root.traverse((o) => {
       if (o.isMesh) {
@@ -124,7 +124,9 @@ export function makeUnitMesh(key) {
   body.add(inner);
   const group = new THREE.Group();
   group.add(body);
-  return { group, body };
+  // la Torre del Rey trae el cañón en un nodo aparte ('Turret') para apuntar
+  const turret = inner.getObjectByName('Turret') ?? null;
+  return { group, body, turret };
 }
 
 export function collectMeshMaterials(root) {
@@ -210,8 +212,7 @@ export function animateUnit(u, dt, moving) {
         fwd = -pulse * 0.30;
         scaleY *= 1 - pulse * 0.08;
         break;
-      case 'tower':   // disparo de torre: leve aplastamiento
-        scaleY *= 1 - pulse * 0.04;
+      case 'tower':   // las torres no se mueven al disparar (como en Clash)
         break;
     }
     u.attackAnimT -= dt;

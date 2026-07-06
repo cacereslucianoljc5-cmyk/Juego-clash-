@@ -20,7 +20,8 @@ cuantización y texturas WebP con `gltf-transform`).
 | 🌊 **Agua animada** | Un plano ondulante con olas cubre el río y los canales. |
 | 🚧 **Colisiones** | Cuadrícula transitable horneada del propio modelo: el agua y los bordes del campo (antes de los bosques) bloquean el paso; el río solo se cruza por los dos puentes. |
 | 🏃 **Animación de caminar** | Esqueleto, Bárbaro, Arquero, Bombardero, Mago, Gigante y P.E.K.K.A (rebote + balanceo); Montapuercos galopa. |
-| ⚔️ **Animación de ataque** | Embestida (cuerpo a cuerpo), arco (Arquero), conjuro (Mago), lanzamiento (Bombardero), culatazo (Cañón) y disparo de torres. |
+| ⚔️ **Animación de ataque** | Embestida (cuerpo a cuerpo), arco (Arquero), conjuro (Mago), lanzamiento (Bombardero) y culatazo (Cañón). |
+| 🏰 **Torres fijas** | Las torres no se mueven al disparar, como en Clash; en la Torre del Rey solo gira el cañón (separado en un nodo `Turret` propio) para apuntar a los enemigos. |
 | 💀 **Muerte** | Las unidades caen y se hunden. |
 | 🧠 **Rival con IA** | Junta elixir y despliega oleadas en su mitad. |
 

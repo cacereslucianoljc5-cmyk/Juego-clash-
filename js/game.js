@@ -3,11 +3,11 @@
 // colisión, igual que los bordes del campo antes de los bosques (cuadrícula
 // horneada en js/arenadata.js).
 import * as THREE from 'three';
-import { ARENA } from './arenadata.js';
+import { ARENA } from './arenadata.js?v=2';
 import {
   loadModels, getArenaModel, makeUnitMesh, collectMeshMaterials,
   animateUnit, UNIT_TYPES, CARD_KEYS,
-} from './units.js';
+} from './units.js?v=2';
 
 // ------------------------------------------------------------ constantes
 const S = 28;                        // escala del modelo Arena
@@ -170,7 +170,7 @@ function paintHpBar(bar, frac) {
 // ------------------------------------------------------------ entidades
 function spawnUnit(key, team, x, z) {
   const t = UNIT_TYPES[key];
-  const { group, body } = makeUnitMesh(key);
+  const { group, body, turret } = makeUnitMesh(key);
   group.position.set(x, 0, z);
   group.rotation.y = team === 1 ? Math.PI : 0; // mirar hacia el rival
   scene.add(group);
@@ -191,6 +191,7 @@ function spawnUnit(key, team, x, z) {
 
   const u = {
     id: nextId++, key, type: t, team, group, body,
+    turret, turretAngle: 0,
     hp: t.hp, maxHp: t.hp, radius: t.radius,
     target: null, retarget: 0, attackCd: 0,
     animT: Math.random() * 10, walkPhase: Math.random() * 6,
@@ -376,6 +377,20 @@ function updateEntity(u, dt) {
   }
   u.attackCd -= dt;
 
+  // la Torre del Rey no gira: solo su cañón (nodo Turret) apunta al enemigo
+  if (u.turret) {
+    let goal = 0; // sin objetivo, el cañón vuelve al frente
+    if (u.target && !u.target.dying) {
+      const tp = u.target.group.position;
+      const world = Math.atan2(tp.x - u.group.position.x, tp.z - u.group.position.z);
+      goal = world - u.group.rotation.y;
+    }
+    let delta = goal - u.turretAngle;
+    delta = ((delta + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI;
+    u.turretAngle += delta * Math.min(1, dt * 5);
+    u.turret.rotation.y = u.turretAngle;
+  }
+
   let moving = false;
   const t = u.type;
   if (u.target) {
@@ -384,8 +399,10 @@ function updateEntity(u, dt) {
     const reach = Math.max(t.range, u.radius + 0.2);
 
     if (dist <= reach) {
-      // mirar al objetivo y atacar
-      u.group.rotation.y = Math.atan2(tp.x - u.group.position.x, tp.z - u.group.position.z);
+      // mirar al objetivo y atacar (las torres quedan fijas, como en Clash)
+      if (!t.tower) {
+        u.group.rotation.y = Math.atan2(tp.x - u.group.position.x, tp.z - u.group.position.z);
+      }
       if (u.attackCd <= 0) {
         u.attackCd = 1 / t.attackRate;
         u.attackAnimDur = Math.min(0.5, 0.9 / t.attackRate);
