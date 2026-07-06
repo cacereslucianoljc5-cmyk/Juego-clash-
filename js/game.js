@@ -3,12 +3,15 @@
 // colisión, igual que los bordes del campo antes de los bosques (cuadrícula
 // horneada en js/arenadata.js).
 import * as THREE from 'three';
-import { ARENA } from './arenadata.js?v=4';
+import { ARENA } from './arenadata.js?v=5';
 import {
   loadModels, getArenaModel, makeUnitMesh, collectMeshMaterials,
   animateUnit, UNIT_TYPES, CARD_KEYS,
-} from './units.js?v=4';
-import { initPostFX } from './postfx.js?v=4';
+} from './units.js?v=5';
+import { initPostFX } from './postfx.js?v=5';
+import { icon } from './icons.js?v=5';
+import { sfx, jingle, unlockAudio } from './audio.js?v=5';
+import { initCursor } from './cursor.js?v=5';
 
 // ------------------------------------------------------------ constantes
 const S = 28;                        // escala del modelo Arena
@@ -133,8 +136,11 @@ function buildDeck() {
     const t = UNIT_TYPES[key];
     const el = document.createElement('button');
     el.className = 'card';
-    el.innerHTML = `<span class="ico">${t.ico}</span>${t.name}<span class="cost">${t.cost}</span>`;
+    el.innerHTML = `<span class="ico">${icon(t.ico, 20)}</span>${t.name}<span class="cost">${t.cost}</span>`;
+    el.addEventListener('pointerenter', () => sfx('hover', 40));
     el.addEventListener('click', () => {
+      unlockAudio();
+      sfx('click', 0);
       selectedCard = selectedCard === key ? null : key;
       document.querySelectorAll('.card').forEach((c) => c.classList.remove('active'));
       if (selectedCard) el.classList.add('active');
@@ -145,6 +151,11 @@ function buildDeck() {
     el.dataset.key = key;
     ui.deck.appendChild(el);
   }
+}
+
+function paintCrowns() {
+  ui.crowns.innerHTML =
+    `${icon('crown', 14)}<b>${player.crowns}</b> — <b>${enemy.crowns}</b>${icon('crown', 14)}`;
 }
 
 function refreshDeck() {
@@ -233,10 +244,11 @@ function dealDamage(u, dmg) {
   paintHpBar(u.bar, u.hp / u.maxHp);
   if (u.hp <= 0) {
     u.dying = true; u.deathT = 0;
+    sfx(u.isTower ? 'towerDown' : 'death', u.isTower ? 0 : 120);
     if (u.isTower) {
       const side = u.team === 1 ? enemy : player;
       side.crowns += u.isKing ? 3 : 1;
-      ui.crowns.textContent = `👑 ${player.crowns} — ${enemy.crowns} 👑`;
+      paintCrowns();
       addEffect('boom', u.group.position.x, u.group.position.z, 0xffc94d, u.radius + 3);
       if (u.isKing) endGame(u.team === -1);
     }
@@ -246,12 +258,17 @@ function dealDamage(u, dmg) {
 function endGame(result) {
   if (gameOver) return;
   gameOver = true;
-  ui.resultText.textContent = result === 'draw' ? '🤝 Empate'
-    : result ? '🏆 ¡Victoria!' : '💀 Derrota…';
+  ui.resultText.innerHTML = result === 'draw' ? `${icon('handshake', 30)} Empate`
+    : result ? `${icon('trophy', 30)} ¡Victoria!` : `${icon('skull', 30)} Derrota…`;
   ui.result.classList.add('show');
+  jingle(result === 'draw' ? 'draw' : result ? 'win' : 'lose');
 }
 
 // ------------------------------------------------------------ proyectiles
+const PROJ_SFX = {
+  arrow: 'arrow', fireball: 'fireball', bomb: 'bombThrow',
+  cannonball: 'cannon', towerbolt: 'towerbolt',
+};
 const PROJ_STYLE = {
   arrow:      { r: 0.10, color: 0xd9c9a3, speed: 24, arc: 2.0 },
   fireball:   { r: 0.30, color: 0xff7a1a, speed: 16, arc: 1.2, glow: true },
@@ -289,6 +306,7 @@ function updateProjectiles(dt) {
     p.mesh.position.y += Math.sin(Math.PI * k) * p.arc;
     if (k >= 1) {
       if (p.splash) {
+        sfx('explosion', 120);
         addEffect('boom', end.x, end.z, p.kind === 'bomb' ? 0x8a8f9c : 0xff7a1a, p.splash + 0.6);
         for (const u of entities) {
           if (u.team === p.team || u.dying) continue;
@@ -297,6 +315,7 @@ function updateProjectiles(dt) {
         }
       } else if (!p.target.dying) {
         dealDamage(p.target, p.dmg);
+        sfx('hit', 100);
       }
       scene.remove(p.mesh);
       projectiles.splice(i, 1);
@@ -416,8 +435,13 @@ function updateEntity(u, dt) {
         u.attackCd = 1 / t.attackRate;
         u.attackAnimDur = Math.min(0.5, 0.9 / t.attackRate);
         u.attackAnimT = u.attackAnimDur;
-        if (t.projectile) fireProjectile(u, u.target, t.projectile);
-        else dealDamage(u.target, t.dmg);
+        if (t.projectile) {
+          fireProjectile(u, u.target, t.projectile);
+          sfx(PROJ_SFX[t.projectile], 90);
+        } else {
+          dealDamage(u.target, t.dmg);
+          sfx('slash', 90);
+        }
       }
     } else if (t.speed > 0) {
       // avanzar (cruzando por los puentes si el río está en medio)
@@ -534,11 +558,13 @@ addEventListener('pointermove', (ev) => {
 });
 
 addEventListener('pointerdown', (ev) => {
+  unlockAudio();
   if (!selectedCard || gameOver || !started) return;
   if (ev.target.closest('#deck') || ev.target.closest('#result')) return;
   const t = UNIT_TYPES[selectedCard];
   const p = pointFromEvent(ev);
-  if (!validDrop(p, t) || player.elixir < t.cost) return;
+  if (!validDrop(p, t) || player.elixir < t.cost) { sfx('invalid', 0); return; }
+  sfx('deploy', 0);
   player.elixir -= t.cost;
   const n = t.count ?? 1;
   for (let i = 0; i < n; i++) {
@@ -587,7 +613,7 @@ function updateWater(time) {
 // Contra la caché de GitHub Pages: si version.json (pedido sin caché)
 // anuncia una versión más nueva que la de este HTML, recarga con una URL
 // única para forzar una copia fresca de la CDN.
-const GAME_VERSION = 4;
+const GAME_VERSION = 5;
 async function checkVersion() {
   try {
     const res = await fetch(`./version.json?nc=${Date.now()}`, { cache: 'no-store' });
@@ -602,7 +628,9 @@ async function checkVersion() {
 
 async function start() {
   if (await checkVersion()) return;
+  initCursor();
   buildDeck();
+  paintCrowns();
   await loadModels((f) => {
     ui.progress.style.width = `${f * 100}%`;
     ui.loadtext.textContent = `Cargando modelos… ${Math.round(f * 100)}%`;
@@ -616,7 +644,6 @@ async function start() {
 
   setupWater();
   spawnTowers();
-  ui.crowns.textContent = '👑 0 — 0 👑';
   ui.loading.classList.add('hide');
   started = true;
 }

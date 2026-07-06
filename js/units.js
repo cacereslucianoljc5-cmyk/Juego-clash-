@@ -44,59 +44,59 @@ export function getArenaModel() {
 // 'cannon' (edificio que dispara), 'tower' (torre que dispara).
 export const UNIT_TYPES = {
   Esqueleto: {
-    name: 'Esqueletos', ico: '💀', cost: 2, count: 3,
+    name: 'Esqueletos', ico: 'skull', cost: 2, count: 3,
     hp: 90, dmg: 45, range: 1.1, speed: 4.1, attackRate: 1.1,
     height: 1.9, radius: 0.5, anim: 'walk', walkFreq: 11, walkAmp: 0.10,
   },
   Barbaro: {
-    name: 'Bárbaro', ico: '⚔️', cost: 3,
+    name: 'Bárbaro', ico: 'swords', cost: 3,
     hp: 340, dmg: 80, range: 1.2, speed: 3.1, attackRate: 0.85,
     height: 2.3, radius: 0.62, anim: 'walk', walkFreq: 9, walkAmp: 0.12,
   },
   Arquero: {
-    name: 'Arquero', ico: '🏹', cost: 3,
+    name: 'Arquero', ico: 'bow-arrow', cost: 3,
     hp: 160, dmg: 48, range: 9, speed: 3.0, attackRate: 0.9,
     height: 2.1, radius: 0.55, anim: 'bow', projectile: 'arrow', walkFreq: 9, walkAmp: 0.10,
   },
   Bombardero: {
-    name: 'Bombardero', ico: '💣', cost: 3,
+    name: 'Bombardero', ico: 'bomb', cost: 3,
     hp: 190, dmg: 105, range: 8, speed: 3.0, attackRate: 0.55,
     splash: 2.6, height: 2.0, radius: 0.55, anim: 'throw', projectile: 'bomb',
     walkFreq: 9, walkAmp: 0.10,
   },
   MagoFuego: {
-    name: 'Mago de Fuego', ico: '🔥', cost: 4,
+    name: 'Mago de Fuego', ico: 'flame', cost: 4,
     hp: 330, dmg: 95, range: 8.5, speed: 2.8, attackRate: 0.6,
     splash: 2.2, height: 2.3, radius: 0.6, anim: 'cast', projectile: 'fireball',
     walkFreq: 8, walkAmp: 0.09,
   },
   MontaPuercos: {
-    name: 'Montapuercos', ico: '🐗', cost: 4,
+    name: 'Montapuercos', ico: 'hammer', cost: 4,
     hp: 750, dmg: 120, range: 1.3, speed: 4.4, attackRate: 0.75,
     height: 2.7, radius: 0.7, anim: 'gallop', walkFreq: 12, walkAmp: 0.16,
   },
   Gigante: {
-    name: 'Gigante', ico: '🗿', cost: 5,
+    name: 'Gigante', ico: 'shield', cost: 5,
     hp: 1300, dmg: 110, range: 1.5, speed: 2.0, attackRate: 0.65,
     height: 3.8, radius: 0.95, anim: 'heavy', walkFreq: 5.5, walkAmp: 0.14,
   },
   Pekka: {
-    name: 'P.E.K.K.A', ico: '🤖', cost: 7,
+    name: 'P.E.K.K.A', ico: 'bot', cost: 7,
     hp: 1500, dmg: 280, range: 1.4, speed: 1.9, attackRate: 0.5,
     height: 3.4, radius: 0.85, anim: 'heavy', walkFreq: 5, walkAmp: 0.12,
   },
   Canon: {
-    name: 'Cañón', ico: '🎯', cost: 4, building: true, lifetime: 30,
+    name: 'Cañón', ico: 'target', cost: 4, building: true, lifetime: 30,
     hp: 650, dmg: 85, range: 10, speed: 0, attackRate: 1.0,
     height: 2.2, radius: 1.0, anim: 'cannon', projectile: 'cannonball',
   },
   Torre: {
-    name: 'Torre', ico: '🏰', tower: true,
+    name: 'Torre', ico: 'castle', tower: true,
     hp: 950, dmg: 42, range: 11, speed: 0, attackRate: 1.0,
     height: 4.6, radius: 1.5, anim: 'tower', projectile: 'towerbolt',
   },
   TorreRey: {
-    name: 'Torre del Rey', ico: '👑', tower: true,
+    name: 'Torre del Rey', ico: 'crown', tower: true,
     hp: 1500, dmg: 55, range: 7, speed: 0, attackRate: 1.0,
     height: 5.6, radius: 1.9, anim: 'tower', projectile: 'towerbolt',
   },

@@ -40,6 +40,17 @@ python3 -m http.server 8000
 O actívalo en **GitHub Pages**: el workflow publica la rama en `gh-pages`
 automáticamente (Settings → Pages → rama `gh-pages`).
 
+## Librerías (todas de GitHub, servidas en local)
+
+- [three.js](https://github.com/mrdoob/three) r160 (MIT) — motor 3D (WebGL).
+- [TypeGPU](https://github.com/software-mansion/TypeGPU) 0.11 (MIT) — post-procesado WebGPU (bloom, color, viñeta).
+- [ZzFX](https://github.com/KilledByAPixel/ZzFX) (MIT) — todos los sonidos se sintetizan por código: hover, clics, despliegue, ataques, explosiones y jingles de final.
+- [Lucide](https://github.com/lucide-icons/lucide) (ISC) — iconos SVG minimalistas para cartas, coronas, resultado, favicon y el cursor. **El juego no usa ningún emoji.**
+
+El cursor es una mano custom (iconos Lucide): abierta sobre la arena, señalando
+al pasar por una carta y agarrando mientras mantienes pulsado. En pantallas
+táctiles se usa el control nativo.
+
 ## Estructura
 
 ```

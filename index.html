@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
 <title>Clash 3D — Batalla en la Arena</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚔️</text></svg>" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23e2e8f0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='14.5 17.5 3 6 3 3 6 3 17.5 14.5'/><line x1='13' x2='19' y1='19' y2='13'/><line x1='16' x2='20' y1='16' y2='20'/><line x1='19' x2='21' y1='21' y2='19'/><polyline points='14.5 6.5 18 3 21 3 21 6 17.5 9.5'/><line x1='5' x2='9' y1='14' y2='18'/><line x1='7' x2='4' y1='17' y2='20'/><line x1='3' x2='5' y1='19' y2='21'/></svg>" />
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body { width: 100%; height: 100%; overflow: hidden; font-family: system-ui, sans-serif; background: #0b1021; touch-action: none; }
@@ -27,6 +27,8 @@
     padding: 6px 16px; border-radius: 20px; color: #e2e8f0; font-size: 14px; font-weight: 700;
   }
   #timer { color: #fbbf24; min-width: 44px; text-align: center; }
+  #crowns { display: inline-flex; align-items: center; gap: 5px; }
+  #crowns svg { color: #fbbf24; }
 
   #hint {
     position: fixed; top: 54px; left: 50%; transform: translateX(-50%);
@@ -61,7 +63,8 @@
   .card:hover { transform: translateY(-3px); }
   .card.active { border-color: #38bdf8; box-shadow: 0 0 0 3px rgba(56,189,248,.25); }
   .card.poor { opacity: .45; }
-  .card .ico { font-size: 19px; display: block; margin-bottom: 1px; }
+  .card .ico { display: flex; justify-content: center; margin-bottom: 3px; color: #7dd3fc; }
+  .card.active .ico { color: #38bdf8; }
   .card .cost {
     position: absolute; top: -6px; left: -5px; width: 19px; height: 19px;
     border-radius: 50%; background: radial-gradient(circle at 35% 30%,#e879f9,#a21caf);
@@ -78,7 +81,11 @@
     background: #0f172a; border: 1px solid rgba(148,163,184,.3); border-radius: 18px;
     padding: 34px 46px; text-align: center; color: #e2e8f0;
   }
-  #resultText { font-size: 30px; font-weight: 800; margin-bottom: 18px; }
+  #resultText {
+    font-size: 30px; font-weight: 800; margin-bottom: 18px;
+    display: flex; align-items: center; justify-content: center; gap: 12px;
+  }
+  #resultText svg { color: #fbbf24; }
   #replay {
     background: linear-gradient(180deg,#38bdf8,#2563eb); border: 0; color: #fff;
     font-size: 15px; font-weight: 700; padding: 10px 26px; border-radius: 12px; cursor: pointer;
@@ -89,15 +96,18 @@
 <div id="app"></div>
 
 <div id="loading">
-  <div style="font-size:22px;font-weight:800;color:#e2e8f0">⚔️ Clash 3D</div>
+  <div style="font-size:22px;font-weight:800;color:#e2e8f0;display:flex;align-items:center;gap:8px">
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"/><line x1="13" x2="19" y1="19" y2="13"/><line x1="16" x2="20" y1="16" y2="20"/><line x1="19" x2="21" y1="21" y2="19"/><polyline points="14.5 6.5 18 3 21 3 21 6 17.5 9.5"/><line x1="5" x2="9" y1="14" y2="18"/><line x1="7" x2="4" y1="17" y2="20"/><line x1="3" x2="5" y1="19" y2="21"/></svg>
+    Clash 3D
+  </div>
   <div class="bar"><span id="progress"></span></div>
   <div id="loadtext">Cargando modelos…</div>
 </div>
 
 <div id="hud">
-  <span id="crowns">👑 0 — 0 👑</span>
+  <span id="crowns"></span>
   <span id="timer">3:00</span>
-  <span id="ver" style="color:#64748b;font-size:11px;font-weight:600">v4</span>
+  <span id="ver" style="color:#64748b;font-size:11px;font-weight:600">v5</span>
 </div>
 <div id="hint">Elige una carta del mazo</div>
 
@@ -116,6 +126,6 @@
 <script type="importmap">
   { "imports": { "three": "./lib/three.module.js" } }
 </script>
-<script type="module" src="./js/game.js?v=4"></script>
+<script type="module" src="./js/game.js?v=5"></script>
 </body>
 </html>
