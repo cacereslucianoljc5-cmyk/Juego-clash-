@@ -152,10 +152,136 @@
     background: linear-gradient(180deg,#38bdf8,#2563eb); border: 0; color: #fff;
     font-size: 15px; font-weight: 700; padding: 10px 26px; border-radius: 12px; cursor: pointer;
   }
+
+  /* ============ MENÚ PRINCIPAL ============ */
+  #menu { position: fixed; inset: 0; z-index: 60; overflow: hidden; background: #241a2e; }
+  #menu.hide { display: none; }
+  #menu .menu-blur {
+    position: absolute; inset: -6%;
+    background: url(./cards/menu_bg.webp?v=1) center/cover no-repeat;
+    filter: blur(28px) brightness(.5) saturate(1.1); transform: scale(1.12);
+  }
+  #menu .menu-frame {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    aspect-ratio: 768 / 950;
+    height: min(100vh, calc(100vw * 950 / 768)); width: auto;
+    background: url(./cards/menu_bg.webp?v=1) center / 100% 100% no-repeat;
+    box-shadow: 0 12px 60px rgba(0,0,0,.6);
+  }
+  /* zonas clicables transparentes alineadas sobre los botones dibujados en la imagen */
+  #menu .hot {
+    position: absolute; border: 0; background: transparent; cursor: pointer;
+    border-radius: 16px; -webkit-tap-highlight-color: transparent;
+    transition: transform .1s ease, filter .1s ease;
+  }
+  #menu .hot:hover { transform: scale(1.03); filter: brightness(1.1); }
+  #menu .hot:active { transform: scale(.97); }
+  #menu .hot.chat    { left: 2.5%;  top: 3%;   width: 23%;   height: 6.5%; }
+  #menu .hot.wallet  { left: 74.5%; top: 3%;   width: 23.5%; height: 6.5%; }
+  #menu .hot.b1v1    { left: 17.5%; top: 61%;  width: 29.5%; height: 22%; }
+  #menu .hot.offline { left: 52%;   top: 61%;  width: 29.5%; height: 22%; }
+  #menu .wallet-chip {
+    position: absolute; left: 74.5%; top: 10.2%; width: 23.5%;
+    text-align: center; color: #eafff6; font-size: clamp(9px, 1.7vw, 13px);
+    font-weight: 800; text-shadow: 0 1px 3px #000; display: none; pointer-events: none;
+  }
+  #menu .wallet-chip.on { display: block; }
+
+  /* ============ CHAT GLOBAL ============ */
+  #chatPanel {
+    position: fixed; z-index: 80; right: 0; top: 0; height: 100%;
+    width: min(92vw, 380px); background: rgba(14,20,38,.97);
+    border-left: 1px solid rgba(148,163,184,.25); color: #e2e8f0;
+    display: flex; flex-direction: column;
+    transform: translateX(0); transition: transform .28s ease;
+    box-shadow: -8px 0 40px rgba(0,0,0,.5);
+  }
+  #chatPanel.hide { transform: translateX(105%); }
+  .chat-head {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 14px; font-weight: 800; border-bottom: 1px solid rgba(148,163,184,.2);
+    background: linear-gradient(180deg,#1b2b4d,#101a33);
+  }
+  .chat-head .x { background: transparent; border: 0; color: #94a3b8; font-size: 18px; cursor: pointer; }
+  .chat-msgs { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+  .chat-msg { background: rgba(30,41,59,.7); border-radius: 10px; padding: 7px 10px; font-size: 13px; line-height: 1.35; word-break: break-word; }
+  .chat-msg.me { background: rgba(37,99,235,.28); }
+  .chat-msg .who { font-weight: 800; color: #7dd3fc; font-size: 12px; }
+  .chat-msg .time { color: #64748b; font-size: 10px; margin-left: 6px; }
+  .chat-form { display: flex; gap: 8px; padding: 10px; border-top: 1px solid rgba(148,163,184,.2); }
+  .chat-form input {
+    flex: 1; padding: 9px 12px; border-radius: 10px; border: 1px solid rgba(148,163,184,.3);
+    background: #0b1220; color: #e2e8f0; font-size: 14px; outline: none;
+  }
+  .chat-form button { padding: 9px 14px; border: 0; border-radius: 10px; cursor: pointer; font-weight: 700; background: linear-gradient(180deg,#38bdf8,#2563eb); color: #fff; }
+  .chat-note { padding: 4px 12px 12px; font-size: 11px; color: #f59e0b; text-align: center; }
+
+  /* ============ BATALLA 1v1 ============ */
+  #onlinePanel { position: fixed; inset: 0; z-index: 70; display: grid; place-items: center; background: rgba(6,10,24,.8); backdrop-filter: blur(4px); }
+  #onlinePanel.hide { display: none; }
+  .ol-card {
+    position: relative; width: min(92vw, 440px);
+    background: linear-gradient(180deg,#16213e,#0d1428);
+    border: 1px solid rgba(148,163,184,.28); border-radius: 20px;
+    padding: 30px 26px 26px; text-align: center; color: #e2e8f0;
+  }
+  .ol-card .x { position: absolute; top: 10px; right: 14px; background: transparent; border: 0; color: #94a3b8; font-size: 20px; cursor: pointer; }
+  .ol-card h2 { font-size: 24px; margin-bottom: 6px; }
+  .ol-card p { color: #94a3b8; font-size: 13px; margin-bottom: 20px; min-height: 18px; }
+  .ol-vs { display: flex; align-items: center; justify-content: center; gap: 20px; margin-bottom: 24px; }
+  .ol-player { display: flex; flex-direction: column; align-items: center; gap: 8px; font-weight: 700; font-size: 13px; }
+  .ol-av { width: 64px; height: 64px; border-radius: 16px; background: #1e293b; border: 2px solid #38bdf8; display: grid; place-items: center; font-size: 30px; }
+  .ol-av.foe { border-color: #f43f5e; opacity: .55; }
+  .ol-vsx { font-size: 22px; font-weight: 900; color: #fbbf24; }
+  .ol-find { width: 100%; padding: 13px; border: 0; border-radius: 12px; cursor: pointer; font-weight: 800; font-size: 16px; background: linear-gradient(180deg,#38bdf8,#2563eb); color: #fff; margin-bottom: 10px; }
+  .ol-find:disabled { opacity: .5; cursor: default; }
+  .ol-back { background: transparent; border: 0; color: #94a3b8; cursor: pointer; font-size: 13px; }
 </style>
 </head>
 <body>
 <div id="app"></div>
+
+<!-- ============ MENÚ PRINCIPAL ============ -->
+<div id="menu">
+  <div class="menu-blur"></div>
+  <div class="menu-frame">
+    <button class="hot chat"    id="chatBtn"    aria-label="Abrir chat"></button>
+    <button class="hot wallet"  id="walletBtn"  aria-label="Conectar wallet"></button>
+    <div class="wallet-chip"    id="walletChip"></div>
+    <button class="hot b1v1"    id="btn1v1"     aria-label="Batalla 1v1"></button>
+    <button class="hot offline" id="btnOffline" aria-label="Modo offline"></button>
+  </div>
+</div>
+
+<!-- ============ CHAT GLOBAL ============ -->
+<div id="chatPanel" class="hide">
+  <div class="chat-head">
+    <span>💬 Chat global</span>
+    <button id="chatClose" class="x" aria-label="Cerrar">✕</button>
+  </div>
+  <div id="chatMessages" class="chat-msgs"></div>
+  <form id="chatForm" class="chat-form">
+    <input id="chatInput" type="text" maxlength="200" placeholder="Escribe un mensaje…" autocomplete="off" />
+    <button type="submit">Enviar</button>
+  </form>
+  <div class="chat-note" id="chatNote"></div>
+</div>
+
+<!-- ============ BATALLA 1v1 ============ -->
+<div id="onlinePanel" class="hide">
+  <div class="ol-card">
+    <button id="onlineClose" class="x" aria-label="Cerrar">✕</button>
+    <h2>⚔️ Batalla 1v1</h2>
+    <p id="onlineStatus">Conecta tu wallet de Solana para jugar online.</p>
+    <div class="ol-vs">
+      <div class="ol-player"><div class="ol-av you">🙂</div><span id="olYou">Tú</span></div>
+      <div class="ol-vsx">VS</div>
+      <div class="ol-player"><div class="ol-av foe">❔</div><span id="olFoe">Rival</span></div>
+    </div>
+    <button id="onlineFind" class="ol-find">Buscar rival</button>
+    <button id="onlineBack" class="ol-back">Volver al menú</button>
+  </div>
+</div>
 
 <div id="loading">
   <div class="scene"></div>
@@ -169,7 +295,7 @@
 <div id="hud">
   <span id="crowns"></span>
   <span id="timer">3:00</span>
-  <span id="ver" style="color:#64748b;font-size:11px;font-weight:600">v8</span>
+  <span id="ver" style="color:#64748b;font-size:11px;font-weight:600">v9</span>
 </div>
 <div id="hint">Elige una carta del mazo</div>
 
@@ -188,6 +314,7 @@
 <script type="importmap">
   { "imports": { "three": "./lib/three.module.js" } }
 </script>
-<script type="module" src="./js/game.js?v=8"></script>
+<script type="module" src="./js/game.js?v=9"></script>
+<script type="module" src="./js/menu.js?v=1"></script>
 </body>
 </html>

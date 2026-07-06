@@ -758,8 +758,13 @@ window.__DBG = () => ({
   })),
 });
 
-start().catch((err) => {
-  ui.loadtext.textContent = `Error loading: ${err.message}`;
-  console.error(err);
-});
+// El juego ya no arranca solo: el menú principal (js/menu.js) decide cuándo
+// empezar la partida offline. Exponemos el arranque para que el menú lo llame.
+window.startOfflineGame = () => {
+  if (started) return;
+  start().catch((err) => {
+    ui.loadtext.textContent = `Error loading: ${err.message}`;
+    console.error(err);
+  });
+};
 loop();
