@@ -3,11 +3,12 @@
 // colisión, igual que los bordes del campo antes de los bosques (cuadrícula
 // horneada en js/arenadata.js).
 import * as THREE from 'three';
-import { ARENA } from './arenadata.js?v=3';
+import { ARENA } from './arenadata.js?v=4';
 import {
   loadModels, getArenaModel, makeUnitMesh, collectMeshMaterials,
   animateUnit, UNIT_TYPES, CARD_KEYS,
-} from './units.js?v=3';
+} from './units.js?v=4';
+import { initPostFX } from './postfx.js?v=4';
 
 // ------------------------------------------------------------ constantes
 const S = 28;                        // escala del modelo Arena
@@ -34,7 +35,15 @@ renderer.setSize(innerWidth, innerHeight);
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping; // colores más cinematográficos
+renderer.toneMappingExposure = 1.12;
 document.getElementById('app').appendChild(renderer.domElement);
+
+// capa de post-procesado con TypeGPU (bloom + color + viñeta) si hay WebGPU
+let postfx = null;
+initPostFX(renderer.domElement, document.getElementById('app'))
+  .then((p) => { postfx = p; if (p) console.log('PostFX WebGPU (TypeGPU) activado'); })
+  .catch(() => {});
 
 scene.add(new THREE.HemisphereLight(0xcfe5ff, 0x3e5a35, 1.0));
 const sun = new THREE.DirectionalLight(0xfff2dd, 2.2);
@@ -578,7 +587,7 @@ function updateWater(time) {
 // Contra la caché de GitHub Pages: si version.json (pedido sin caché)
 // anuncia una versión más nueva que la de este HTML, recarga con una URL
 // única para forzar una copia fresca de la CDN.
-const GAME_VERSION = 3;
+const GAME_VERSION = 4;
 async function checkVersion() {
   try {
     const res = await fetch(`./version.json?nc=${Date.now()}`, { cache: 'no-store' });
@@ -665,6 +674,7 @@ function loop() {
   }
 
   renderer.render(scene, camera);
+  if (postfx) postfx.render(time);
 }
 
 document.getElementById('replay').addEventListener('click', () => location.reload());
