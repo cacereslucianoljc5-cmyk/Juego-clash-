@@ -3,15 +3,15 @@
 // colisión, igual que los bordes del campo antes de los bosques (cuadrícula
 // horneada en js/arenadata.js).
 import * as THREE from 'three';
-import { ARENA } from './arenadata.js?v=5';
+import { ARENA } from './arenadata.js?v=6';
 import {
   loadModels, getArenaModel, makeUnitMesh, collectMeshMaterials,
   animateUnit, UNIT_TYPES, CARD_KEYS,
-} from './units.js?v=5';
-import { initPostFX } from './postfx.js?v=5';
-import { icon } from './icons.js?v=5';
-import { sfx, jingle, unlockAudio } from './audio.js?v=5';
-import { initCursor } from './cursor.js?v=5';
+} from './units.js?v=6';
+import { initPostFX } from './postfx.js?v=6';
+import { icon } from './icons.js?v=6';
+import { sfx, jingle, unlockAudio } from './audio.js?v=6';
+import { initCursor } from './cursor.js?v=6';
 
 // ------------------------------------------------------------ constantes
 const S = 28;                        // escala del modelo Arena
@@ -131,12 +131,42 @@ const ui = {
 };
 let selectedCard = null;
 
+// ---------------------------------------------------- mazo rotativo
+// En cada partida el mazo cambia: 6 cartas de 9, barajadas con una semilla
+// que avanza en cada partido (localStorage), así vas rotando de cartas.
+const DECK_SIZE = 6;
+function mulberry32(a) {
+  return () => {
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function pickDeck(offset) {
+  let seed = 0;
+  try {
+    seed = Number(localStorage.getItem('deckSeed') || 0);
+    if (offset === 0) localStorage.setItem('deckSeed', String(seed + 1));
+  } catch { seed = Math.floor(Math.random() * 1e6); }
+  const rnd = mulberry32(seed * 2654435761 + 97 + offset * 7919);
+  const keys = [...CARD_KEYS];
+  for (let i = keys.length - 1; i > 0; i--) {
+    const j = Math.floor(rnd() * (i + 1));
+    [keys[i], keys[j]] = [keys[j], keys[i]];
+  }
+  return keys.slice(0, DECK_SIZE);
+}
+const playerDeck = pickDeck(0);
+const enemyDeck = pickDeck(1);
+
 function buildDeck() {
-  for (const key of CARD_KEYS) {
+  for (const key of playerDeck) {
     const t = UNIT_TYPES[key];
     const el = document.createElement('button');
     el.className = 'card';
-    el.innerHTML = `<span class="ico">${icon(t.ico, 20)}</span>${t.name}<span class="cost">${t.cost}</span>`;
+    el.style.backgroundImage = `url(./cards/${key}.webp?v=6)`;
+    el.innerHTML = `<span class="cost">${t.cost}</span><span class="cname">${t.name}</span>`;
     el.addEventListener('pointerenter', () => sfx('hover', 40));
     el.addEventListener('click', () => {
       unlockAudio();
@@ -507,7 +537,7 @@ function updateEnemyAI(dt) {
   enemy.cd -= dt;
   if (enemy.cd > 0) return;
   enemy.cd = 2.2 + Math.random() * 2.2;
-  const affordable = CARD_KEYS.filter((k) => UNIT_TYPES[k].cost <= enemy.elixir);
+  const affordable = enemyDeck.filter((k) => UNIT_TYPES[k].cost <= enemy.elixir);
   if (!affordable.length) return;
   const key = affordable[Math.floor(Math.random() * affordable.length)];
   const t = UNIT_TYPES[key];
@@ -613,7 +643,7 @@ function updateWater(time) {
 // Contra la caché de GitHub Pages: si version.json (pedido sin caché)
 // anuncia una versión más nueva que la de este HTML, recarga con una URL
 // única para forzar una copia fresca de la CDN.
-const GAME_VERSION = 5;
+const GAME_VERSION = 6;
 async function checkVersion() {
   try {
     const res = await fetch(`./version.json?nc=${Date.now()}`, { cache: 'no-store' });

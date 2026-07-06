@@ -40,6 +40,13 @@ python3 -m http.server 8000
 O actívalo en **GitHub Pages**: el workflow publica la rama en `gh-pages`
 automáticamente (Settings → Pages → rama `gh-pages`).
 
+## Cartas
+
+El mazo muestra **cartas con imagen**: retratos generados desde los propios
+modelos GLB (raster por software con sombreado, `tools/` describe el pipeline).
+En **cada partida el mazo rota**: 6 cartas de 9, barajadas con una semilla que
+avanza en cada partido; la IA rival usa su propio mazo rotativo.
+
 ## Librerías (todas de GitHub, servidas en local)
 
 - [three.js](https://github.com/mrdoob/three) r160 (MIT) — motor 3D (WebGL).
