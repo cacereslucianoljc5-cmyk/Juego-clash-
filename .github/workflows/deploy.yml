@@ -8,9 +8,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
 concurrency:
   group: pages
@@ -19,19 +17,11 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
-      - name: Activar y configurar Pages
-        uses: actions/configure-pages@v5
-        with:
-          enablement: true
-      - name: Empaquetar el sitio
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: .
-      - name: Publicar en GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+      - name: Publicar la rama en gh-pages
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -B gh-pages
+          git push -f origin gh-pages
