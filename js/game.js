@@ -3,11 +3,11 @@
 // colisión, igual que los bordes del campo antes de los bosques (cuadrícula
 // horneada en js/arenadata.js).
 import * as THREE from 'three';
-import { ARENA } from './arenadata.js?v=2';
+import { ARENA } from './arenadata.js?v=3';
 import {
   loadModels, getArenaModel, makeUnitMesh, collectMeshMaterials,
   animateUnit, UNIT_TYPES, CARD_KEYS,
-} from './units.js?v=2';
+} from './units.js?v=3';
 
 // ------------------------------------------------------------ constantes
 const S = 28;                        // escala del modelo Arena

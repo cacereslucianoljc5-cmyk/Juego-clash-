@@ -16,7 +16,7 @@ export async function loadModels(onProgress) {
   const loader = new GLTFLoader();
   let done = 0;
   await Promise.all(MODEL_FILES.map(async (name) => {
-    const gltf = await loader.loadAsync(`./models/${name}.glb?v=2`);
+    const gltf = await loader.loadAsync(`./models/${name}.glb?v=3`);
     const root = gltf.scene;
     root.traverse((o) => {
       if (o.isMesh) {
